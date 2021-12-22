@@ -17,7 +17,7 @@
   </header>
 	<div class="container">
 
-    <form action="index.html" method="post" novalidate>
+    <form action="index.html" method="post" novalidate id='userForm'>
       <p id="form-hint" class="form-hint"><span class="asterisk">*</span> - required field</p>
 
       <div class="basic-info-and-shirt-box">       
@@ -47,7 +47,7 @@
             <option value="other">Other</option>  
           </select> 
           
-          <input type="text" name="other-job-role" id="other-job-role" class="other-job-role" placeholder="Other job role?">
+          <input type="text" name="other-job-role" id="other-job-role" class="other-job-role" placeholder="Other job role?" hidden>
         </fieldset>
         
         <fieldset class="shirts">
@@ -75,7 +75,7 @@
 
             <div id="shirt-colors" class="shirt-colors">
               <label for="color">Color:</label>
-              <select id="color">
+              <select id="color" disabled>
                 <option selected hidden>Select a design theme above</option>
                 <option data-theme="js puns" value="cornflowerblue">Cornflower Blue (JS Puns shirt only)</option>
                 <option data-theme="js puns" value="darkslategrey">Dark Slate Grey (JS Puns shirt only)</option> 
@@ -152,7 +152,7 @@
           <label for="payment">I'm going to pay with:</label>
           <select id="payment" name="user-payment">
             <option value="select method" hidden>Select Payment Method</option>
-            <option value="credit-card">Credit Card</option>
+            <option value="credit-card" selected>Credit Card</option>
             <option value="paypal">PayPal</option>
             <option value="bitcoin">Bitcoin</option>
           </select>
@@ -216,12 +216,12 @@
           </div>           	         
         </div>
 
-        <div id="paypal" class="paypal">
+        <div id="paypal" class="paypal" hidden>
           <h3>PayPal</h3>
         	<p>If you selected the PayPal option we'll take you to Paypal's site to set up your billing information, when you click “Register” below.</p>
         </div> 
 
-        <div id="bitcoin" class="bitcoin">
+        <div id="bitcoin" class="bitcoin" hidden>
           <h3>Bitcoin</h3>
         	<p>If you selected the Bitcoin option we'll take you to the Coinbase site to set up your billing information. Due to the nature of exchanging Bitcoin, all Bitcoin transactions will be final.</p>
         </div>                  
