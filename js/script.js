@@ -19,6 +19,7 @@ jobField.addEventListener('change', (e) => {
 
 /*
     Add event listener for 'T-Shirt Design' field changes.
+    Monitors 'change' events when a user selects a color.
 */
 const designField = document.querySelector('#design');
 designField.addEventListener('change', (e) => {
@@ -37,6 +38,46 @@ designField.addEventListener('change', (e) => {
     }
 });
 
+/*
+    create the `toggleDisabledActivity` function
+    Disables elements based on the 'active' argument passed, and the 'activity' element object provided.
+*/
+
+function toggleDisabledActivity(active, activity) {
+    if (!active) {
+        activity.disabled = false;
+        activity.parentElement.classList.remove('disabled');
+    } else {
+        activity.disabled = true;
+        activity.parentElement.classList.add('disabled');
+    }
+}
+
+/* 
+    create the `getAllPickedActivities` function
+    creates an array of objects containing each selected activity, and the time of said activity.
+    Ex: obj = { 
+        ele: {element object},
+        time: 'Tuesday 9am-12pm',
+    } 
+*/
+
+function getAllPickedActivities(activities) {
+    let arr = [];
+    for (const picked of activities) {
+        if (picked.checked) {
+            let obj = {
+                ele: picked,
+                time: picked.getAttribute('data-day-and-time')
+            }
+            arr.push(obj);
+        }
+    }
+    //console.log(arr);
+    return arr;
+}
+
+
 /* 
     create the 'updateTotalCost' function
     updates the text of the activity-cost html element based on the new cost provided. 
@@ -46,6 +87,7 @@ function updateTotalCost(cost) {
     const activitiesCost = document.querySelector('#activities-cost');
     activitiesCost.textContent = `Total $${cost}`;
 }
+
 
 /*
     add event listener for 'Register for Activities' field changes
@@ -57,38 +99,49 @@ const activities = activityContainer.querySelectorAll('input');
 let activitiesSelected = 0; //Number of activities chosen.
 activityContainer.addEventListener('change', (e) => {
     const activity = e.target;
-    const cost = parseInt(activity.getAttribute('data-cost'));
-    //update the total cost of all activities selected.
+    let newTotalCost = 0;
+    let newTotalSelected = 0;
+    let allPicked = getAllPickedActivities(activities);
+
+    //When user clicks on each activity input.
     if (activity.tagName === 'INPUT') {
-        var newTotalCost = 0;
-        var newTotalSelected = 0;
-        for (const selected of activities) {
-            let selectedTime = activity.getAttribute('data-day-and-time');
 
-            //check through all inputs for conflicting event times.
-            for (const other of activities) {
-                let otherTime = other.getAttribute('data-day-and-time');
-                //disable events with conflicting times, add class to show this.
-                if (selected !== other) {
-                    other.disabled = selectedTime === otherTime;
-                    if (selectedTime === otherTime) {
-                        other.parentElement.classList.add('disabled');
-                    } else {
-                        other.parentElement.classList.remove('disabled');
-                    }
-                }
-            }
+        //Check picked and nonpicked events.
+        for (const activity of activities) {
+            let picked = activity.checked;
+            let cost = parseInt(activity.getAttribute('data-cost'));
+            let disabled = activity.disabled; 
+            toggleDisabledActivity(false, activity);
 
-            //add the cost of an activity to total cost calculated.
-            if (selected.checked) {
+            //add cost of picked events.
+            if (picked) {
                 newTotalCost += cost;
                 newTotalSelected++;
             }
+
+            //Disable events with matching times.
+            for (const selected of allPicked) {
+                let activityTime = activity.getAttribute('data-day-and-time');
+                let matchingTime = selected.time === activityTime;
+                let sameActivity = selected.ele === activity; 
+                
+                //exclude picked events.
+                if (!picked) {
+                    //exclude identical activities, but check for matching times.
+                    if (!sameActivity && matchingTime) {
+                        toggleDisabledActivity(true, activity);
+                    } 
+                }
+            }
+            
         }
-        activitiesSelected = newTotalSelected;
-        updateTotalCost(newTotalCost);
+
+        activitiesSelected = newTotalSelected; //update activities selected count.
+        updateTotalCost(newTotalCost); //update selected activity cost total.
+        validateActivities(); //make sure atleast one activity is selected by the user.
     }
 });
+
 activityContainer.addEventListener('focus', (e) => {
     const activity = e.target;
     if (activity.tagName === 'INPUT') {
@@ -123,8 +176,10 @@ paymentField.addEventListener('change', (e) => {
     Track and monitor all formfield validation statuses globally. 
 */
 
-function toggleErrorNotice(valid, element) {
+function toggleErrorNotice(valid, element, message = '') {
     let label = document.querySelector(element).parentElement;
+    let isMessage = message.length > 0;
+    let hint = label.querySelector('.hint');
     if (valid) {
         //Show checkmark when valid, and hide hint.
         label.classList.remove('not-valid');
@@ -134,7 +189,10 @@ function toggleErrorNotice(valid, element) {
         //Show an exclamation when invalid, and show a hint.
         label.classList.remove('valid');
         label.classList.add('not-valid');
-        label.querySelector('.hint').style.display = 'inherit';
+        hint.style.display = 'inherit';
+        if (isMessage) {
+            hint.textContent = message;
+        } 
     }
 }
 
@@ -155,8 +213,14 @@ function validateName(name) {
 */
 
 function validateEmail(email) {
+    //if no email is provided.
+    let isProvided = email.length > 0;
     let result = /^\w+@\w+\.\w+$/g.test(email);
-    toggleErrorNotice(result, '#email');
+    if (!isProvided) {
+        toggleErrorNotice(result, '#email', 'Please provide an email address');
+    } else {
+        toggleErrorNotice(result, '#email', 'Invalid email address format, please provide a valid email address and try again');
+    }
     return result;
 }
 
@@ -177,10 +241,15 @@ function validateActivities() {
 */
 
 function validateCreditCard(creditCard) {
+    let isProvided = creditCard.length > 0;
     let characterCountTest = /^\d{13,16}$/g;
     let charactersTest = /^[^\s\-]+$/g;
     let result = characterCountTest.test(creditCard) && charactersTest.test(creditCard);
-    toggleErrorNotice(result, '#cc-num');
+    if (!isProvided) {
+        toggleErrorNotice(result, '#cc-num', 'Please provide a valid credit card number');
+    } else {
+        toggleErrorNotice(result, '#cc-num', 'Credit card number must be between 13 - 16 digits');
+    }
     return result;
 }
 
@@ -190,8 +259,13 @@ function validateCreditCard(creditCard) {
 */
 
 function validateZipCode(zip) {
+    let isProvided = zip.length > 0;
     let result = /\d{5}/g.test(zip);
-    toggleErrorNotice(result, '#zip');
+    if (isProvided) {
+        toggleErrorNotice(result, '#zip', 'Zip Code must be 5 digits');
+    } else {
+        toggleErrorNotice(result, '#zip', 'Please provide a valid zipcode');
+    }
     return result;
 }
 
@@ -201,10 +275,77 @@ function validateZipCode(zip) {
 */
 
 function validateCVV(cvv) {
+    let isProvided = cvv.length > 0;
     let result = /^\d{3}$/g.test(cvv);
     toggleErrorNotice(result, '#cvv');
+    if (!isProvided) {
+        toggleErrorNotice(result, '#cvv', 'Please provide a valid cvv');
+    } else {
+        toggleErrorNotice(result, '#cvv', 'CVV must be 3 digits');
+    }
     return result;
 }
+
+/* 
+    add event listener for `name` required field.
+    validate field on `blur`
+*/
+
+nameField.addEventListener('blur', (e) => {
+    validateName(nameField.value);
+});
+
+/* 
+    add event listener for `email` required field.
+    validate field on `blur`
+*/
+
+const emailField = document.querySelector('#email');
+emailField.addEventListener('blur', (e) => {
+    validateEmail(document.querySelector('#email').value);
+});
+
+/* 
+    add event listener for `cc-num` required field.
+    validate field on `blur`
+*/
+
+const ccNumField = document.querySelector('#cc-num');
+ccNumField.addEventListener('blur', (e) => {
+    let isCreditCard = paymentField.value === 'credit-card';
+    //If credit card is selected, validate fields.
+    if (isCreditCard) {
+        validateCreditCard(document.querySelector('#cc-num').value);
+    }
+});
+
+/* 
+    add event listener for `zip` required field.
+    validate field on `blur`
+*/
+
+const ccZipField = document.querySelector('#zip');
+ccZipField.addEventListener('blur', (e) => {
+    let isCreditCard = paymentField.value === 'credit-card';
+    //If credit card is selected, validate fields.
+    if (isCreditCard) {
+        validateZipCode(document.querySelector('#zip').value);
+    }
+});
+
+/* 
+    add event listener for `cvv` required field.
+    validate field on `blur`
+*/
+
+const ccCvvField = document.querySelector('#cvv');
+ccCvvField.addEventListener('blur', (e) => {
+    let isCreditCard = paymentField.value === 'credit-card';
+    //If credit card is selected, validate fields.
+    if (isCreditCard) {
+        validateCVV(document.querySelector('#cvv').value);
+    }
+});
 
 /* 
     add event listener for the form submit.
