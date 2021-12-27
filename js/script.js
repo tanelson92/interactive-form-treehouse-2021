@@ -142,19 +142,23 @@ activityContainer.addEventListener('change', (e) => {
     }
 });
 
-activityContainer.addEventListener('focus', (e) => {
-    const activity = e.target;
-    if (activity.tagName === 'INPUT') {
+/*
+    add event listener for activity 'focus' and 'blur' events
+    Provide visual cues and accessibility for users using tab navigation. 
+*/
+
+for (const activity of activities) {
+
+    activity.addEventListener('focus', (e) => {
         activity.parentElement.classList.add('focus');
-    }
-});
-activityContainer.addEventListener('blur', (e) => {
-    const activity = e.target;
-    if (activity.tagName === 'INPUT') {
+        validateActivities();
+    });
+    activity.addEventListener('blur', (e) => {
         let label = document.querySelector('.focus');
         label.classList.remove('focus');
-    }
-});
+    });
+
+}
 
 /*
     add event listener for 'Payment Info'
